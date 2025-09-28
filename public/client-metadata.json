@@ -1,8 +1,8 @@
 {
-  "client_id": "https://maearth-test.vercel.app/client-metadata.json",
+  "client_id": "https://gainforest-testing.vercel.app/client-metadata.json",
   "client_name": "GainForest",
-  "client_uri": "https://maearth-test.vercel.app",
-  "redirect_uris": ["https://maearth-test.vercel.app"],
+  "client_uri": "https://gainforest-testing.vercel.app",
+  "redirect_uris": ["https://gainforest-testing.vercel.app"],
   "scope": "atproto transition:generic",
   "grant_types": ["authorization_code", "refresh_token"],
   "response_types": ["code"],

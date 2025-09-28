@@ -1,4 +1,4 @@
-const baseUrl = "https://maearth-test.vercel.app";
+const baseUrl = "https://gainforest-testing.vercel.app";
 export const METADATA = {
   client_id: `${baseUrl}/client-metadata.json`,
   client_name: "GainForest",
