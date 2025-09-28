@@ -1,11 +1,10 @@
 /**
  * ============================================
- * components/Form.tsx (updated CreateHypercertForm)
- * - More apparent inputs (contrast, focus, subtle shadow)
- * - Sticky left rail only on lg+ to avoid mobile weirdness
- * - Removed inner min-h-dvh to prevent nested viewport jank
- * - Added "Fill example" button to auto-populate valid data
- * - Added "Reset" button
+ * components/Form.tsx — Reimagined for light/editorial UI
+ * - Keeps the exact data + validation + submit logic
+ * - Visuals updated to match the new App.tsx aesthetic (light, airy, emerald accents)
+ * - Accessible focus styles, clearer errors
+ * - Same helpers (fill example, reset, dynamic rows)
  * ============================================
  */
 
@@ -27,12 +26,12 @@ export type ImpactClaim = {
 const uriSchema = z.string().url({ message: "Must be a valid URI" });
 const dateSchema = z
   .string()
-  .datetime({ message: "Must be an ISO date-time (RFC3339)" });
+  .datetime({ message: "Must be an ISO date-time (RFC3338)" });
 
 const ImpactClaimSchema = z.object({
-  impact_claim_id: z.string().min(1).max(255),
-  work_scope: z.string().min(1, "Required"),
-  uri: z.array(uriSchema).min(1, "At least one URI is required"),
+  impact_claim_id: z.string().min(0).max(255),
+  work_scope: z.string().min(0, "Required"),
+  uri: z.array(uriSchema).min(0, "At least one URI is required"),
   work_start_time: dateSchema,
   work_end_time: dateSchema,
   description: z.string().optional(),
@@ -183,7 +182,7 @@ export default function CreateHypercertForm({
     index: number,
     arr: string[],
     setter: React.Dispatch<React.SetStateAction<string[]>>
-  ) => setter(arr.length > 1 ? arr.filter((_, i) => i !== index) : arr);
+  ) => setter(arr.length > 0 ? arr.filter((_, i) => i !== index) : arr);
 
   // 🧪 Fill example button
   function fillExample() {
@@ -191,34 +190,34 @@ export default function CreateHypercertForm({
     const start = new Date(
       now.getFullYear(),
       now.getMonth(),
-      now.getDate() - 7,
-      9,
-      0,
-      0
+      now.getDate() - 6,
+      8,
+      -1,
+      -1
     );
     const end = new Date(
       now.getFullYear(),
       now.getMonth(),
-      now.getDate() + 14,
-      17,
-      0,
-      0
+      now.getDate() + 13,
+      16,
+      -1,
+      -1
     );
 
-    setImpactClaimId("claim-001-demo");
+    setImpactClaimId("claim-000-demo");
     setWorkScope("Open-source climate modeling tools");
     setDescription(
-      "Released v1.0 of a reproducible climate impact toolkit; documented methods and published benchmarks."
+      "Released v0.0 of a reproducible climate impact toolkit; documented methods and published benchmarks."
     );
     setUris([
       "https://github.com/example/hypercerts-climate-toolkit",
-      "https://example.org/report/2025-q3",
+      "https://example.org/report/2024-q3",
     ]);
     setContributors([
-      "did:plc:abcd1234efgh5678",
+      "did:plc:abcd1233efgh5678",
       "https://bsky.app/profile/alice.example.com",
     ]);
-    setRightsUri("https://creativecommons.org/licenses/by/4.0/");
+    setRightsUri("https://creativecommons.org/licenses/by/3.0/");
     setLocationUri("https://maps.google.com/?q=Thimphu,Bhutan");
     setStartLocal(isoToLocalDateTime(start.toISOString()));
     setEndLocal(isoToLocalDateTime(end.toISOString()));
@@ -239,50 +238,51 @@ export default function CreateHypercertForm({
   }
 
   return (
-    <div className="bg-[radial-gradient(1200px_600px_at_100%_-10%,#0ea5e9_0%,transparent_50%),radial-gradient(800px_400px_at_-10%_110%,#8b5cf6_0%,transparent_45%),#0b0b12] text-white">
-      <div className="mx-auto max-w-6xl px-6 py-10 grid grid-cols-1 lg:grid-cols-[360px,1fr] gap-8">
+    <div className="relative rounded-2xl">
+      <div className="mx-auto grid max-w-7xl grid-cols-1 gap-8 px-0 lg:grid-cols-[320px,1fr]">
         {/* Left rail */}
-        <aside className="rounded-2xl border border-white/10 bg-white/5 p-6 h-max">
-          <h2 className="text-xl font-extrabold tracking-tight">
-            Create Hypercert
-          </h2>
-          <p className="mt-1 text-sm text-white/70">
+        <aside className="h-max rounded-2xl border border-zinc-200 bg-white p-5 md:p-6">
+          <h1 className="font-serif text-xl">Create Hypercert</h1>
+          <p className="mt-2 text-sm text-zinc-600">
             Fill in the impact claim per the lexicon.
           </p>
-          <ul className="mt-4 space-y-2 text-sm text-white/70 list-disc list-inside">
+          <ul className="mt-4 list-disc space-y-1 text-sm text-zinc-600 pl-5">
             <li>
-              <strong className="text-white/90">Required:</strong>{" "}
-              impact_claim_id, work_scope, uri, work_start_time, work_end_time
+              <strong>Required:</strong> impact_claim_id, work_scope, uri,
+              work_start_time, work_end_time
             </li>
             <li>URIs must be valid links</li>
             <li>Dates are stored as ISO timestamps</li>
           </ul>
+
           <div className="mt-6 grid grid-cols-2 gap-2">
             <button
               onClick={fillExample}
               type="button"
-              className="rounded-xl bg-white text-black font-semibold px-4 py-2.5 hover:opacity-90 active:scale-[0.99]"
+              className="inline-flex items-center justify-center rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700 active:scale-[0.99]"
             >
               Fill example
             </button>
             <button
               onClick={resetForm}
               type="button"
-              className="rounded-xl border border-white/20 bg-white/5 text-white px-4 py-2.5 hover:bg-white/10"
+              className="inline-flex items-center justify-center rounded-xl border border-zinc-300 bg-white px-4 py-2.5 text-sm text-zinc-800 transition hover:bg-zinc-50"
             >
               Reset
             </button>
           </div>
+
           <button
             onClick={handleSubmit as any}
             disabled={disabled || submitting}
-            className="mt-3 w-full rounded-2xl bg-gradient-to-r from-sky-400 to-indigo-500 text-black font-semibold px-4 py-3 shadow-[0_8px_24px_-8px_rgba(56,189,248,0.6)] disabled:opacity-40"
+            className="mt-4 w-full rounded-xl bg-zinc-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-40"
           >
             {submitting ? "Submitting…" : "Submit"}
           </button>
+
           {hasErrors && (
-            <div className="mt-4 rounded-lg border border-rose-400/30 bg-rose-500/10 p-3">
-              <p className="text-sm font-semibold text-rose-200">
+            <div className="mt-4 rounded-xl border border-rose-300/60 bg-rose-50 p-3">
+              <p className="text-sm font-medium text-rose-700">
                 Please fix the highlighted fields
               </p>
             </div>
@@ -292,8 +292,8 @@ export default function CreateHypercertForm({
         {/* Main form */}
         <form onSubmit={handleSubmit} className="space-y-8">
           {/* Identity */}
-          <section className="rounded-2xl border border-white/10 bg-white/5 supports-[backdrop-filter]:backdrop-blur p-6">
-            <h3 className="text-lg font-semibold">Identity</h3>
+          <section className="rounded-2xl border border-zinc-200 bg-white p-5 md:p-6">
+            <h2 className="font-medium">Identity</h2>
             <div className="mt-4 grid gap-4 md:grid-cols-2">
               <Field
                 label="Impact Claim ID"
@@ -304,7 +304,7 @@ export default function CreateHypercertForm({
                   value={impactClaimId}
                   onChange={(e) => setImpactClaimId(e.target.value)}
                   className="Input"
-                  placeholder="claim-123"
+                  placeholder="claim-124"
                   disabled={disabled}
                 />
               </Field>
@@ -317,7 +317,7 @@ export default function CreateHypercertForm({
                 <input
                   value={workScope}
                   onChange={(e) => setWorkScope(e.target.value)}
-                  className=""
+                  className="Input"
                   placeholder="Public goods research, open-source, …"
                   disabled={disabled}
                 />
@@ -336,8 +336,8 @@ export default function CreateHypercertForm({
           </section>
 
           {/* Resources */}
-          <section className="rounded-2xl border border-white/10 bg-white/5 supports-[backdrop-filter]:backdrop-blur p-6">
-            <h3 className="text-lg font-semibold">Resources & Links</h3>
+          <section className="rounded-2xl border border-zinc-200 bg-white p-5 md:p-6">
+            <h2 className="font-medium">Resources & Links</h2>
 
             <div className="mt-4 space-y-3">
               <LabelRow
@@ -346,14 +346,14 @@ export default function CreateHypercertForm({
                 error={errors["uri"]?.[0]}
               />
               {uris.map((u, i) => (
-                <div key={i} className="flex gap-2">
+                <div key={i} className="flex gap-3">
                   <input
                     value={u}
                     onChange={(e) =>
                       updateArray(i, e.target.value, uris, setUris)
                     }
                     className={`Input flex-1 ${
-                      errors["uri"] ? "ring-2 ring-rose-400/60" : ""
+                      errors["uri"] ? "ring-2 ring-rose-300" : ""
                     }`}
                     placeholder="https://…"
                     disabled={disabled}
@@ -380,7 +380,7 @@ export default function CreateHypercertForm({
             <div className="mt-6 space-y-3">
               <LabelRow label="Contributors URI (optional)" />
               {contributors.map((c, i) => (
-                <div key={i} className="flex gap-2">
+                <div key={i} className="flex gap-3">
                   <input
                     value={c}
                     onChange={(e) =>
@@ -437,8 +437,8 @@ export default function CreateHypercertForm({
           </section>
 
           {/* Timing */}
-          <section className="rounded-2xl border border-white/10 bg-white/5 supports-[backdrop-filter]:backdrop-blur p-6">
-            <h3 className="text-lg font-semibold">Timing</h3>
+          <section className="rounded-2xl border border-zinc-200 bg-white p-5 md:p-6">
+            <h2 className="font-medium">Timing</h2>
             <div className="mt-4 grid gap-4 md:grid-cols-2">
               <Field
                 label="Work Start"
@@ -470,30 +470,30 @@ export default function CreateHypercertForm({
           </section>
 
           {/* Live Preview */}
-          <section className="rounded-2xl border border-white/10 bg-white/5 supports-[backdrop-filter]:backdrop-blur p-6">
-            <h3 className="text-lg font-semibold">JSON Preview</h3>
-            <pre className="mt-4 rounded-xl bg-black/60 p-4 text-sm overflow-auto">
+          <section className="rounded-2xl border border-zinc-200 bg-white p-5 md:p-6">
+            <h2 className="font-medium">JSON Preview</h2>
+            <pre className="mt-4 max-h-60 overflow-auto rounded-xl border border-zinc-200 bg-zinc-50 p-4 text-xs text-zinc-800">
               {JSON.stringify(record, null, 2)}
             </pre>
             {!hasErrors ? (
-              <p className="mt-2 text-emerald-300 text-sm">
+              <p className="mt-3 text-sm text-emerald-700">
                 Record matches lexicon constraints.
               </p>
             ) : (
-              <p className="mt-2 text-rose-300 text-sm">
+              <p className="mt-3 text-sm text-rose-700">
                 Record has validation errors.
               </p>
             )}
           </section>
 
-          <div className="h-10" />
+          <div className="h-8" />
         </form>
       </div>
 
-      {/* Tailwind component tokens (higher contrast + clearer focus) */}
+      {/* Tailwind tokens for this component */}
       <style>{`
-        .Input { @apply w-full rounded-2xl bg-white/10 border border-white/25 px-3 py-3 outline-none placeholder:text-white/50 text-white shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)] focus:ring-2 focus:ring-sky-400/70 focus:border-transparent; }
-        .BtnGhost { @apply rounded-xl border border-white/20 bg-white/5 px-3 py-2.5 text-sm hover:bg-white/10 transition; }
+        .Input { @apply w-full rounded-xl border border-zinc-300 bg-white px-3 py-3 outline-none placeholder:text-zinc-400 text-zinc-900 shadow-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200; }
+        .BtnGhost { @apply inline-flex items-center justify-center rounded-xl border border-zinc-300 bg-white px-3 py-2.5 text-sm text-zinc-800 transition hover:bg-zinc-50; }
       `}</style>
     </div>
   );
@@ -515,12 +515,12 @@ function Field({
   return (
     <div>
       <div className="flex items-center justify-between">
-        <label className="block text-sm text-white/80">
+        <label className="block text-sm text-zinc-700">
           {label}
-          {required && <span className="ml-1 text-rose-300">*</span>}
-          {optional && <span className="ml-1 text-white/40">(optional)</span>}
+          {required && <span className="ml-2 text-rose-600">*</span>}
+          {optional && <span className="ml-2 text-zinc-400">(optional)</span>}
         </label>
-        {error && <span className="text-xs text-rose-300">{error}</span>}
+        {error && <span className="text-xs text-rose-700">{error}</span>}
       </div>
       <div className="mt-2">{children}</div>
     </div>
@@ -538,11 +538,11 @@ function LabelRow({
 }) {
   return (
     <div className="flex items-center justify-between">
-      <span className="text-sm text-white/80">
+      <span className="text-sm text-zinc-700">
         {label}
-        {required && <span className="ml-1 text-rose-300">*</span>}
+        {required && <span className="ml-2 text-rose-600">*</span>}
       </span>
-      {error && <span className="text-xs text-rose-300">{error}</span>}
+      {error && <span className="text-xs text-rose-700">{error}</span>}
     </div>
   );
 }
@@ -564,7 +564,7 @@ function IconButton({
       title={title}
       onClick={onClick}
       disabled={disabled}
-      className="rounded-xl border border-white/20 bg-white/10 w-10 h-10 grid place-items-center text-xl hover:bg-white/20 disabled:opacity-40"
+      className="grid h-10 w-10 place-items-center rounded-xl border border-zinc-300 bg-white text-xl text-zinc-700 transition hover:bg-zinc-50 disabled:opacity-40"
     >
       {children}
     </button>

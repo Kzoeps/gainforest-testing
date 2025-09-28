@@ -6,14 +6,12 @@ import { createImpactClaim } from "./api/create-impact";
 import toast from "react-hot-toast";
 
 /**
- * =====================
- * App.tsx (updated)
- * - Fixes scroll jank (no fixed backgrounds, uses 100svh)
- * - Higher-contrast inputs handled in Form via tokens
- * - Safer sticky only at lg+
- * =====================
+ * Reimagined UI
+ *  - Keeps identical auth + submission logic
+ *  - Radically different aesthetic: airy, light, editorial
+ *  - Split layout with brand column and content panel
  */
-function App() {
+export default function App() {
   const { signIn, signOut, session, isReady, state } = useBlueskyAuth();
   const [handle, setHandle] = useState("");
 
@@ -33,10 +31,9 @@ function App() {
     if (state) console.debug("Bluesky OAuth state:", state);
   }, [state]);
 
-  // 🔗 Hook up the hypercert form submit
+  // Hypercert creation submit (unchanged logic)
   const handleCreate = useCallback(
     async (record: ImpactClaim) => {
-      console.log("creating impact claim");
       if (!session) return;
       await createImpactClaim(session, record);
       toast.success("Created Impact Claim!");
@@ -45,135 +42,183 @@ function App() {
   );
 
   return (
-    <div className="min-h-[100svh] bg-black text-white relative overflow-x-clip">
-      {/* Background: use absolutely-positioned layers (not fixed) to avoid repaint-jank */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 -z-10 [background:radial-gradient(800px_600px_at_70%_20%,#1e1e1e_0%,#0a0a0a_60%,#000_100%)]"
-      />
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 -z-10 bg-[linear-gradient(transparent_24px,rgba(255,255,255,0.04)_25px),linear-gradient(90deg,transparent_24px,rgba(255,255,255,0.04)_25px)] bg-[size:26px_26px] mix-blend-screen"
-      />
+    <div className="min-h-[100svh] bg-[#FAFAF7] text-zinc-900 selection:bg-amber-200/60">
+      {/* Decorative backdrop */}
+      <div aria-hidden className="fixed inset-0 -z-10 overflow-hidden">
+        <div className="absolute -top-32 -left-24 h-[28rem] w-[28rem] rounded-full bg-amber-200/50 blur-3xl" />
+        <div className="absolute -bottom-24 -right-24 h-[22rem] w-[22rem] rounded-full bg-emerald-200/50 blur-3xl" />
+      </div>
 
-      <main className="mx-auto max-w-5xl px-6 py-14">
-        <header className="mb-10">
-          <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight">
-            <span className="bg-clip-text text-transparent bg-[conic-gradient(at_30%_50%,#60a5fa,65%,#a78bfa_85%,#22d3ee)]">
-              Connect to Hypercerts
+      <div className="mx-auto grid min-h-[100svh] max-w-7xl grid-cols-1 lg:grid-cols-[1.05fr_1.35fr]">
+        {/* Brand / Left column */}
+        <aside className="relative flex flex-col gap-8 px-8 py-10 lg:px-12 lg:py-16 border-b lg:border-b-0 lg:border-r border-zinc-200">
+          <div className="flex items-center gap-3">
+            <span className="grid h-10 w-10 place-items-center rounded-xl bg-emerald-600 text-white font-bold">
+              H
             </span>
-          </h1>
-          <p className="mt-2 text-sm text-zinc-400">
-            Sign in, then create an impact claim (hypercert).
-          </p>
-        </header>
-
-        <section className="relative rounded-2xl border border-zinc-800/70 bg-zinc-950/70 supports-[backdrop-filter]:backdrop-blur-md shadow-[0_0_0_1px_rgba(255,255,255,0.03)_inset,0_20px_60px_-20px_rgba(0,0,0,0.7)] p-6 md:p-8">
-          {!isReady ? (
-            <div className="flex items-center justify-center py-16">
-              <SpinnerLabel label="Preparing Bluesky OAuth…" />
+            <div className="leading-tight">
+              <h1 className="font-serif text-2xl tracking-tight">
+                Hypercert Studio
+              </h1>
+              <p className="text-sm text-zinc-600">Make your impact legible.</p>
             </div>
-          ) : session ? (
-            <div className="space-y-8">
-              {/* Signed-in DID strip (kept) */}
-              <div className="flex items-center justify-between gap-4">
-                <div className="flex items-center gap-4">
-                  <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-sky-500 to-indigo-500 grid place-items-center font-bold">
-                    {(session.sub?.[0] ?? "U").toUpperCase()}
-                  </div>
-                  <div>
-                    <p className="text-sm text-zinc-300">Signed in as</p>
-                    <p className="font-mono text-sm md:text-base break-all">
-                      {session.sub}
-                    </p>
-                    {state && (
-                      <p className="text-xs text-zinc-500 mt-1">
-                        state: <span className="font-mono">{state}</span>
+          </div>
+
+          <div className="mt-2 lg:mt-6">
+            <h2 className="font-serif text-xl">Submit your hypercert</h2>
+            <p className="mt-2 max-w-prose text-sm text-zinc-600">
+              A gentle portal to authenticate with your Hypercerts handle and
+              publish a verifiable impact claim.
+            </p>
+          </div>
+
+          <IllustrationCluster />
+
+          <footer className="mt-auto pt-8 text-xs text-zinc-500">
+            © {new Date().getFullYear()} Hypercert Studio
+          </footer>
+        </aside>
+
+        {/* Content / Right panel */}
+        <main className="relative px-6 py-8 sm:px-10 md:px-12 lg:px-14 lg:py-16">
+          <Panel>
+            {!isReady ? (
+              <div className="flex items-center justify-center py-14">
+                <SpinnerLabel label="Preparing secure sign‑in…" />
+              </div>
+            ) : session ? (
+              <div className="grid gap-10">
+                {/* Profile summary bar */}
+                <div className="flex flex-col gap-4 rounded-2xl border border-zinc-200 bg-white p-5 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex items-start gap-4">
+                    <div className="grid h-12 w-12 place-items-center rounded-xl bg-emerald-600 text-white font-bold">
+                      {(session.sub?.[0] ?? "U").toUpperCase()}
+                    </div>
+                    <div>
+                      <p className="text-xs uppercase tracking-wide text-zinc-500">
+                        Signed in
                       </p>
-                    )}
+                      <p className="font-mono text-sm break-all text-zinc-800">
+                        {session.sub}
+                      </p>
+                      {state && (
+                        <p className="mt-1 text-xs text-zinc-500">
+                          state: <span className="font-mono">{state}</span>
+                        </p>
+                      )}
+                    </div>
                   </div>
+                  <button
+                    onClick={signOut}
+                    className="inline-flex items-center justify-center rounded-xl bg-zinc-900 px-4 py-2.5 text-white transition hover:bg-zinc-800 active:scale-[0.99]"
+                  >
+                    Sign out
+                  </button>
                 </div>
-                <button
-                  onClick={signOut}
-                  className="rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-3 font-semibold hover:bg-zinc-800 active:scale-[0.99] transition"
-                >
-                  Sign out
-                </button>
-              </div>
 
-              {/* Divider */}
-              <div className="h-px w-full bg-zinc-800/80" />
-
-              {/* Hypercert creation form */}
-              <CreateHypercertForm onSubmit={handleCreate} />
-            </div>
-          ) : (
-            <form onSubmit={onSubmit} className="space-y-6">
-              <div>
-                <label
-                  htmlFor="bsky"
-                  className="block text-xs uppercase tracking-wide text-zinc-400 mb-2"
-                >
-                  Hypercerts handle
-                </label>
-                <div className="relative">
-                  <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500">
-                    @
-                  </span>
-                  <input
-                    id="bsky"
-                    type="text"
-                    autoCapitalize="none"
-                    autoCorrect="off"
-                    placeholder="yourname.hypercerts.climateai.org"
-                    className="w-full rounded-2xl border border-white/20 bg-white/10 pl-8 pr-3 py-3 outline-none focus:ring-2 focus:ring-sky-400/60 focus:border-transparent placeholder:text-zinc-400 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.05)]"
-                    value={handle}
-                    onChange={(e) => setHandle(e.target.value)}
+                {/* Submission surface */}
+                <section className="rounded-2xl border border-zinc-200 bg-white p-5 md:p-8">
+                  <Header
+                    title="Create Impact Claim"
+                    subtitle="Describe the work, scope, and evidence. Publish when ready."
                   />
-                </div>
-                <p className="mt-2 text-xs text-zinc-500">
-                  Use your full handle (e.g.{" "}
-                  <code className="font-mono">
-                    yourname.hypercerts.climateai.org
-                  </code>
-                  ).
-                </p>
+                  <div className="mt-6">
+                    <CreateHypercertForm onSubmit={handleCreate} />
+                  </div>
+                </section>
               </div>
+            ) : (
+              <form onSubmit={onSubmit} className="grid gap-8">
+                <Header
+                  title="Sign in to continue"
+                  subtitle="Use your full Hypercerts handle."
+                />
 
-              <button
-                type="submit"
-                disabled={!canLogin}
-                className="w-full rounded-2xl bg-gradient-to-r from-sky-500 to-indigo-500 px-4 py-3 font-semibold text-black shadow-[0_8px_24px_-8px_rgba(56,189,248,0.6)] hover:opacity-95 active:scale-[0.99] disabled:opacity-40 disabled:cursor-not-allowed transition"
-              >
-                Continue with Hypercerts
-              </button>
+                <div className="grid gap-2">
+                  <label
+                    htmlFor="bsky"
+                    className="text-xs font-medium text-zinc-700"
+                  >
+                    Hypercerts handle
+                  </label>
+                  <div className="relative">
+                    <input
+                      id="bsky"
+                      type="text"
+                      autoCapitalize="none"
+                      autoCorrect="off"
+                      placeholder="yourname.hypercerts.climateai.org"
+                      className="w-full rounded-xl border border-zinc-300 bg-white px-3 py-3 pr-24 shadow-sm outline-none ring-0 placeholder:text-zinc-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200"
+                      value={handle}
+                      onChange={(e) => setHandle(e.target.value)}
+                    />
+                    <div className="pointer-events-none absolute inset-y-0 right-2 grid place-items-center">
+                      <kbd className="rounded-lg border border-zinc-300 bg-zinc-50 px-2 py-1 text-[10px] text-zinc-600">
+                        @handle
+                      </kbd>
+                    </div>
+                  </div>
+                  <p className="text-xs text-zinc-500">
+                    Example:{" "}
+                    <code className="font-mono">
+                      yourname.hypercerts.climateai.org
+                    </code>
+                  </p>
+                </div>
 
-              <p className="text-center text-xs text-zinc-500">
-                You’ll be redirected to Hypercerts to authorize.
-              </p>
-            </form>
-          )}
-        </section>
+                <button
+                  type="submit"
+                  disabled={!canLogin}
+                  className="inline-flex h-11 items-center justify-center rounded-xl bg-emerald-600 px-5 font-semibold text-white shadow-sm transition hover:bg-emerald-700 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  Continue
+                </button>
 
-        <footer className="mt-10 text-center text-xs text-zinc-500">
-          © {new Date().getFullYear()} — Sign-in portal
-        </footer>
-      </main>
+                <p className="text-xs text-zinc-500">
+                  You’ll be redirected to Hypercerts to authorize.
+                </p>
+              </form>
+            )}
+          </Panel>
+        </main>
+      </div>
+    </div>
+  );
+}
+
+function Panel({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="relative">
+      <div className="pointer-events-none absolute -inset-4 -z-10 rounded-3xl bg-gradient-to-br from-emerald-200/40 via-transparent to-amber-200/40" />
+      <div className="rounded-3xl border border-zinc-200 bg-[#FFFEFC]/80 p-4 shadow-[0_20px_40px_-20px_rgba(0,0,0,0.15)] sm:p-6 md:p-8">
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function Header({ title, subtitle }: { title: string; subtitle?: string }) {
+  return (
+    <div>
+      <h2 className="font-serif text-2xl tracking-tight sm:text-3xl">
+        {title}
+      </h2>
+      {subtitle && <p className="mt-1 text-sm text-zinc-600">{subtitle}</p>}
     </div>
   );
 }
 
 function SpinnerLabel({ label }: { label: string }) {
   return (
-    <div className="inline-flex items-center gap-3 text-zinc-300">
-      <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
+    <div className="inline-flex items-center gap-3 text-zinc-700">
+      <svg className="h-5 w-5 animate-spin" viewBox="0 0 24 24" fill="none">
         <circle
           cx="12"
           cy="12"
           r="9"
           stroke="currentColor"
           strokeWidth="2"
-          className="opacity-30"
+          className="opacity-20"
         />
         <path
           d="M21 12a9 9 0 0 1-9 9"
@@ -187,4 +232,69 @@ function SpinnerLabel({ label }: { label: string }) {
   );
 }
 
-export default App;
+function IllustrationCluster() {
+  return (
+    <div aria-hidden className="mt-4 grid grid-cols-3 gap-3 sm:gap-4">
+      {["Impact", "Scope", "Evidence"].map((t, i) => (
+        <div
+          key={t}
+          className="relative aspect-[4/3] overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm"
+        >
+          <svg viewBox="0 0 400 300" className="h-full w-full">
+            <defs>
+              <linearGradient id={`g${i}`} x1="0" x2="1">
+                <stop offset="0%" stopOpacity="0.1" />
+                <stop offset="100%" stopOpacity="0.4" />
+              </linearGradient>
+            </defs>
+            <rect x="0" y="0" width="400" height="300" fill={`url(#g${i})`} />
+            <g>
+              <circle
+                cx={70 + i * 20}
+                cy={110}
+                r={24}
+                className="fill-emerald-400/40"
+              />
+              <circle
+                cx={150 + i * 20}
+                cy={150}
+                r={18}
+                className="fill-amber-400/40"
+              />
+              <circle
+                cx={230 + i * 20}
+                cy={90}
+                r={28}
+                className="fill-emerald-400/30"
+              />
+              <rect
+                x={60}
+                y={200}
+                width={260}
+                height={12}
+                rx={6}
+                className="fill-zinc-200"
+              />
+              <rect
+                x={60}
+                y={220}
+                width={180}
+                height={12}
+                rx={6}
+                className="fill-zinc-200"
+              />
+            </g>
+            <text
+              x="60"
+              y="48"
+              className="fill-zinc-500"
+              style={{ font: "600 14px ui-sans-serif, system-ui" }}
+            >
+              {t}
+            </text>
+          </svg>
+        </div>
+      ))}
+    </div>
+  );
+}
