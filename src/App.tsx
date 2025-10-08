@@ -139,7 +139,7 @@ export default function App() {
                     htmlFor="bsky"
                     className="text-xs font-medium text-zinc-700"
                   >
-                    Hypercerts handle
+                    Hypercerts handle | Email
                   </label>
                   <div className="relative">
                     <input
@@ -147,22 +147,17 @@ export default function App() {
                       type="text"
                       autoCapitalize="none"
                       autoCorrect="off"
-                      placeholder="yourname.hypercerts.climateai.org"
                       className="w-full rounded-xl border border-zinc-300 bg-white px-3 py-3 pr-24 shadow-sm outline-none ring-0 placeholder:text-zinc-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200"
                       value={handle}
                       onChange={(e) => setHandle(e.target.value)}
                     />
-                    <div className="pointer-events-none absolute inset-y-0 right-2 grid place-items-center">
-                      <kbd className="rounded-lg border border-zinc-300 bg-zinc-50 px-2 py-1 text-[10px] text-zinc-600">
-                        @handle
-                      </kbd>
-                    </div>
                   </div>
                   <p className="text-xs text-zinc-500">
                     Example:{" "}
                     <code className="font-mono">
                       yourname.hypercerts.climateai.org
-                    </code>
+                    </code>{" "}
+                    or youer email: <code>kzpes@hypercerts.org</code>
                   </p>
                 </div>
 

@@ -13,6 +13,7 @@ import {
   type OAuthSession,
 } from "@atproto/oauth-client-browser";
 import { METADATA } from "../constants";
+import { useNavigate } from "@tanstack/react-router";
 
 /**
  * Context shape
@@ -26,7 +27,7 @@ export type BlueskyAuthContextValue = {
 
   // helpers
   signIn: (
-    handleOrDidOrPds: string,
+    handleOrEmailOrDidOrPds: string,
     opts?: { state?: string }
   ) => Promise<never>; // redirects
   signOut: () => Promise<void>;
@@ -45,18 +46,35 @@ export const BlueskyAuthContext = createContext<BlueskyAuthContextValue>({
   },
 });
 
+function isEmail(input: string) {
+  return /\S+@\S+\.\S+/.test(input);
+}
+
+async function resolveHandleFromEmail(email: string): Promise<string | null> {
+  const origin = `https://maearth-test.vercel.app`;
+  const url = `${origin}/api/searchAccounts?email=${encodeURIComponent(email)}`;
+
+  const res = await fetch(url, { method: "GET" });
+  if (!res.ok) {
+    // 404 means “not found” from your endpoint
+    if (res.status === 404) return null;
+    const errText = await res.text().catch(() => res.statusText);
+    throw new Error(`Account lookup failed: ${res.status} ${errText}`);
+  }
+
+  // Your endpoint returns: { handle: string, did: string }
+  const data = (await res.json()) as { handle?: string; did?: string };
+  return data.handle ?? null;
+}
+
 /**
  * Provider
- *
- * Usage:
- * <BlueskyAuthProvider>
- *   <App />
- * </BlueskyAuthProvider>
  */
 export function BlueskyAuthProvider({ children }: PropsWithChildren) {
   const [session, setSession] = useState<OAuthSession | null>(null);
   const [state, setState] = useState<string | undefined>(undefined);
   const [error, setError] = useState<unknown>(undefined);
+  const navigate = useNavigate();
   const [isReady, setIsReady] = useState(false);
   // Keep a stable client instance
   const clientRef = useRef<BrowserOAuthClient | null>(null);
@@ -66,23 +84,21 @@ export function BlueskyAuthProvider({ children }: PropsWithChildren) {
 
     async function boot() {
       try {
-        console.log("trying to boot");
+        console.log("booting");
         clientRef.current = new BrowserOAuthClient({
           clientMetadata: METADATA,
-          // clientMetadata: undefined,
           handleResolver: "https://hypercerts.climateai.org",
         });
-        console.log("boot passed");
+        console.log("booted");
 
         const result = await clientRef.current.init();
-        console.log(result);
+        console.log("inited", { result });
         if (!cancelled && result?.session) {
           setSession(result.session);
-          //@ts-expect-error state is transient and only when the user has authorized
+          // @ts-expect-error: state is transient and may be present post-auth
           setState(result.state);
         }
       } catch (err) {
-        console.log(error);
         if (!cancelled) setError(err);
       } finally {
         if (!cancelled) setIsReady(true);
@@ -97,13 +113,31 @@ export function BlueskyAuthProvider({ children }: PropsWithChildren) {
 
   // Helpers
   const signIn = useCallback<BlueskyAuthContextValue["signIn"]>(
-    async (handleOrDidOrPds: string, opts) => {
+    async (handleOrEmailOrDidOrPds: string, opts) => {
       const c = clientRef.current;
       if (!c) throw new Error("OAuth client not ready");
-      // NOTE: This redirects away and the Promise never resolves (by design).
-      return c.signIn(handleOrDidOrPds, {
-        state: opts?.state,
-      });
+
+      let loginTarget = handleOrEmailOrDidOrPds;
+
+      if (isEmail(handleOrEmailOrDidOrPds)) {
+        // resolve email -> handle via your API
+        const handle = await resolveHandleFromEmail(handleOrEmailOrDidOrPds);
+        if (!handle) {
+          navigate({
+            to: `/signup`,
+            search: { email: loginTarget },
+          });
+        }
+        loginTarget = handle || ""; // use resolved handle for OAuth
+      }
+
+      // NOTE: pass the (handle|did|pds) directly; no hardcoded PDS URL
+      if (loginTarget) {
+        return c.signIn(loginTarget, {
+          state: opts?.state,
+        });
+      }
+      return Promise.reject(new Error("Invalid login identifier"));
     },
     []
   );
